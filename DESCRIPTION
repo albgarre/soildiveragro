@@ -1,8 +1,8 @@
 Package: soildiveragro
-Title: PKG_TITLE
-Version: 0.0.0.9000
+Title: Soildiveragro Decision Support Tool
+Version: 0.1.0
 Authors@R: 
-    person("AUTHOR_FIRST", "AUTHOR_LAST", , "AUTHOR@MAIL.COM", role = c("aut", "cre"))
+    person("Alberto", "Garre", , "alberto.garre@upct.es", role = c("aut", "cre"))
 Description: PKG_DESC.
 License: MIT + file LICENSE
 Depends: 
@@ -12,6 +12,7 @@ Imports:
     config,
     dplyr,
     ggplot2,
+    ggsci,
     golem,
     magrittr,
     plotly,

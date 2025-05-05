@@ -9,129 +9,147 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-#' @importFrom bslib navset_card_pill nav_panel
-#' @importFrom ggplot2 geom_hline geom_violin coord_flip geom_boxplot
+#' @importFrom bslib navset_card_pill nav_panel navset_card_underline
+#' @importFrom ggplot2 geom_hline geom_violin coord_flip geom_boxplot theme_gray labs
 #' @importFrom rlang .data
 #' @importFrom plotly ggplotly plotlyOutput renderPlotly
+#' @importFrom ggsci scale_fill_flatui scale_colour_flatui
 #'
 mod_prediction_ui <- function(id) {
   ns <- NS(id)
   tagList(
 
+    # layout_column_wrap(
+    #   width = 1,
+    #   card(class = "bg-warning",
+    #     p(paste0(
+    #       "A short description",
+    #       "of what we are actually predicting"
+    #       ))
+    #   )
+    # ),
+
     layout_column_wrap(
-      width = 1,
-      card(
-        card_header(h3("Prediction")),
-        p(paste0(
-          "A short description",
-          "of what we are actually predicting"
+      width = 1/2,
+      layout_column_wrap(
+        width = 1,
+        card(
+          fill = FALSE,
+          card_header(h4("Uploading the soil data"), class = "bg-success"),
+          card_body(
+            p(
+              paste("Please upload the soil data using the Excel template.",
+                    "It can be downloaded using this link:")
+            ),
+            downloadLink(NS(id, "downloadData"), "Download template"),
+            p(
+              paste("Once you have filled it in, please uploaded it using the 'Browse' button",
+                    "and select the sheet where it is located from 'Sheet name'.",
+                    "Finally, please click on the 'Load' button.")
+            )
+          ),
+          card_footer(
+            layout_column_wrap(
+              width = 1,
+
+              fileInput(NS(id, "excel_file"), "Excel file"),
+              # selectInput(NS(id, "excel_sheet"), "Sheet name", choices = c())
+            ),
+            layout_column_wrap(
+              width = 1,
+              actionButton(NS(id, "load_data"), "Load",
+                           outline = TRUE, flat = FALSE,
+                           status = "primary"
+              )
+            )
           ))
+      ),
+      layout_column_wrap(
+        width = 1,
+        navset_card_underline(
+          full_screen = TRUE,
+          title = h3("Input data"),
+          header = card_body(
+            p("Please use this information to check the data was uploaded correctly.")
+          ),
+          nav_panel(
+            title = "Metadata",
+            tableOutput(NS(id, "summary_inputs"))
+          ),
+          nav_panel(
+            title = "Physicochemical",
+            plotOutput(NS(id, "plot_physico"))
+          ),
+          nav_panel(
+            title = "Climate",
+            plotOutput(NS(id, "plot_climate"))
+          )
+        ),
       )
-    ),
-
-    layout_column_wrap(  # Card for the data upload ----------------------------
-                         width = 1,
-                         card(
-                           card_header(h4("Uploading the soil data"), class = "bg-primary"),
-                           card_body(
-                             p(
-                               paste("Please upload the soil data using the Excel template.",
-                                     "It can be downloaded using this link:")
-                             ),
-                             downloadLink(NS(id, "downloadData"), "Download template"),
-                             p(
-                               paste("Once you have filled it in, please uploaded it using the 'Browse' button",
-                                     "and select the sheet where it is located from 'Sheet name'.",
-                                     "Finally, please click on the 'Load' button.")
-                             )
-                           ),
-                           card_footer(
-                             layout_column_wrap(
-                               width = 1/2,
-
-                               fileInput(NS(id, "excel_file"), "Excel file"),
-                               selectInput(NS(id, "excel_sheet"), "Sheet name", choices = c())
-                             ),
-                             layout_column_wrap(
-                               width = 1,
-                               actionButton(NS(id, "load_data"), "Load",
-                                            outline = TRUE, flat = FALSE,
-                                            status = "primary"
-                               )
-                             )
-                           ))
-
     ),
 
     layout_column_wrap(
       width = 1/2,
-      navset_card_pill(
+      card(
         full_screen = TRUE,
-        title = "Inputs",
-        nav_panel(
-          title = "Table",
-          tableOutput(NS(id, "summary_inputs"))
+        card_header(h3("Yield prediction"), class = "bg-warning"),
+        checkboxInput(NS(id, "yield_categories"), "By category?"),
+        conditionalPanel(
+          ns = NS(id),
+          condition = "input.yield_categories",
+          selectInput(NS(id, "yield_selected"), "", choices = c("region", "tillage", "fertilization", "pesticides"))
         ),
-        nav_panel(
-          title = "Physicochemical",
-          plotOutput(NS(id, "plot_physico"))
-        ),
-        nav_panel(
-          title = "Climate",
-          plotOutput(NS(id, "plot_climate"))
-        )
+        plotlyOutput(NS(id, "yield_plot"))
       ),
-      navset_card_pill(
-        full_screen = TRUE,
-        title = "Predictions",
-        nav_panel(
-          title = "Summary",
-          h4("Predictions"),
-          tableOutput(NS(id, "out_predictions")),
+      card(
+        card_header(h3("Bacterial biodiversity"), class = "bg-warning"),
+        checkboxInput(NS(id, "bacteria_categories"), "By category?"),
+        conditionalPanel(
+          ns = NS(id),
+          condition = "input.bacteria_categories",
+          selectInput(NS(id, "bacteria_selected"), "", choices = c("region", "tillage", "fertilization", "pesticides"))
+        ),
+        plotlyOutput(NS(id, "bacteria_plot"))
+      )
+    ),
+
+    layout_column_wrap(
+      width = 1/2,
+      card(
+        card_header(h3("Fungal biodiversity"), class = "bg-warning"),
+        checkboxInput(NS(id, "fungal_categories"), "By category?"),
+        conditionalPanel(
+          ns = NS(id),
+          condition = "input.fungal_categories",
+          selectInput(NS(id, "fungal_selected"), "", choices = c("region", "tillage", "fertilization", "pesticides"))
+        ),
+        plotlyOutput(NS(id, "fungal_plot"))
+      ),
+      card(
+        card_header(h3("Nematode biodiversity"), class = "bg-warning"),
+        checkboxInput(NS(id, "nema_categories"), "By category?"),
+        conditionalPanel(
+          ns = NS(id),
+          condition = "input.nema_categories",
+          selectInput(NS(id, "nema_selected"), "", choices = c("region", "tillage", "fertilization", "pesticides"))
+        ),
+        plotlyOutput(NS(id, "nema_plot"))
+      )
+    ),
+
+    layout_column_wrap(
+      width = 1,
+      card(
+        card_header(class = "bg-warning",
+                    h3("Numerical values")
+        ),
+        card_body(
           h4("Percentiles"),
           tableOutput(NS(id, "summary_percentages")),
           h4("Percentiles per region"),
-          tableOutput(NS(id, "summary_percentages_region"))
-        ),
-        nav_panel(
-          title = "Yield",
-          checkboxInput(NS(id, "yield_categories"), "Use categories?"),
-          conditionalPanel(
-            ns = NS(id),
-            condition = "input.yield_categories",
-            selectInput(NS(id, "yield_selected"), "", choices = c("region", "tillage", "fertilization", "pesticides"))
-            ),
-          plotlyOutput(NS(id, "yield_plot"))
-        ),
-        nav_panel(
-          title = "Bacteria",
-          checkboxInput(NS(id, "bacteria_categories"), "Use categories?"),
-          conditionalPanel(
-            ns = NS(id),
-            condition = "input.bacteria_categories",
-            selectInput(NS(id, "bacteria_selected"), "", choices = c("region", "tillage", "fertilization", "pesticides"))
-          ),
-          plotlyOutput(NS(id, "bacteria_plot"))
-        ),
-        nav_panel(
-          title = "Fungal",
-          checkboxInput(NS(id, "fungal_categories"), "Use categories?"),
-          conditionalPanel(
-            ns = NS(id),
-            condition = "input.fungal_categories",
-            selectInput(NS(id, "fungal_selected"), "", choices = c("region", "tillage", "fertilization", "pesticides"))
-          ),
-          plotlyOutput(NS(id, "fungal_plot"))
-        ),
-        nav_panel(
-          title = "Nematode",
-          checkboxInput(NS(id, "nema_categories"), "Use categories?"),
-          conditionalPanel(
-            ns = NS(id),
-            condition = "input.nema_categories",
-            selectInput(NS(id, "nema_selected"), "", choices = c("region", "tillage", "fertilization", "pesticides"))
-          ),
-          plotlyOutput(NS(id, "nema_plot"))
+          tableOutput(NS(id, "summary_percentages_region")),
+          h4("Raw values"),
+          tableOutput(NS(id, "out_predictions")),
         )
       )
     )
@@ -172,15 +190,15 @@ mod_prediction_server <- function(id){
       input$excel_file
     })
 
-    observeEvent(excelFile(), {  # Update the choices
-
-      validate(need(excelFile(), message = ""))
-      updateSelectInput(session = session,
-                        inputId = "excel_sheet",
-                        choices = excel_sheets(excelFile()$datapath)
-      )
-
-    })
+    # observeEvent(excelFile(), {  # Update the choices
+    #
+    #   validate(need(excelFile(), message = ""))
+    #   updateSelectInput(session = session,
+    #                     inputId = "excel_sheet",
+    #                     choices = excel_sheets(excelFile()$datapath)
+    #   )
+    #
+    # })
 
     ## Reactive values
 
@@ -209,7 +227,8 @@ mod_prediction_server <- function(id){
       ## Load the data
 
       d <- read_excel(excelFile()$datapath,
-                      sheet = input$excel_sheet,
+                      # sheet = input$excel_sheet,
+                      sheet = "Template",
                       col_types = c(rep("text", 5),
                                     rep("numeric", 18)
                                     )
@@ -336,7 +355,10 @@ mod_prediction_server <- function(id){
         pivot_longer(-sample) %>%
         ggplot() +
         geom_col(aes(x = sample, y = value, fill = sample)) +
-        facet_wrap("name", scales = "free")
+        facet_wrap("name", scales = "free") +
+        scale_fill_flatui() +
+        theme_gray(base_size = 14) +
+        labs(x = "", y = "")
 
     })
 
@@ -351,7 +373,10 @@ mod_prediction_server <- function(id){
         pivot_longer(-sample) %>%
         ggplot() +
         geom_col(aes(x = sample, y = value, fill = sample)) +
-        facet_wrap("name", scales = "free")
+        facet_wrap("name", scales = "free") +
+        scale_fill_flatui() +
+        theme_gray(base_size = 14) +
+        labs(x = "", y = "")
 
     })
 
@@ -464,14 +489,16 @@ mod_prediction_server <- function(id){
           geom_boxplot(aes(x = 1, y = yield)) +
           geom_hline(aes(yintercept = yield, colour = sample), data = pred_new(),
                      linetype = 2) +
-          coord_flip()
+          coord_flip() +
+          scale_colour_flatui()
       } else {
         p <- model_data$yield %>%
           ggplot() +
           geom_boxplot(aes(x = .data[[input$yield_selected]], y = yield)) +
           geom_hline(aes(yintercept = yield, colour = sample), data = pred_new(),
                      linetype = 2) +
-          coord_flip()
+          coord_flip() +
+          scale_colour_flatui()
 
       }
 
@@ -495,14 +522,16 @@ mod_prediction_server <- function(id){
           geom_boxplot(aes(x = 1, y = chao1)) +
           geom_hline(aes(yintercept = bacteria, colour = sample), data = pred_new(),
                      linetype = 2) +
-          coord_flip()
+          coord_flip() +
+          scale_colour_flatui()
       } else {
         p <- model_data$bacteria %>%
           ggplot() +
           geom_boxplot(aes(x = .data[[input$bacteria_selected]], y = chao1)) +
           geom_hline(aes(yintercept = bacteria, colour = sample), data = pred_new(),
                      linetype = 2) +
-          coord_flip()
+          coord_flip() +
+          scale_colour_flatui()
 
       }
 
@@ -526,14 +555,17 @@ mod_prediction_server <- function(id){
           geom_boxplot(aes(x = 1, y = chao1)) +
           geom_hline(aes(yintercept = fungal, colour = sample), data = pred_new(),
                      linetype = 2) +
-          coord_flip()
+          coord_flip() +
+          scale_colour_flatui()
+
       } else {
         p <- model_data$fungal %>%
           ggplot() +
           geom_boxplot(aes(x = .data[[input$fungal_selected]], y = chao1)) +
           geom_hline(aes(yintercept = fungal, colour = sample), data = pred_new(),
                      linetype = 2) +
-          coord_flip()
+          coord_flip() +
+          scale_colour_flatui()
 
       }
 
@@ -557,14 +589,17 @@ mod_prediction_server <- function(id){
           geom_boxplot(aes(x = 1, y = chao1)) +
           geom_hline(aes(yintercept = nematode, colour = sample), data = pred_new(),
                      linetype = 2) +
-          coord_flip()
+          coord_flip() +
+          scale_colour_flatui()
+
       } else {
         p <- model_data$nema %>%
           ggplot() +
           geom_boxplot(aes(x = .data[[input$nema_selected]], y = chao1)) +
           geom_hline(aes(yintercept = nematode, colour = sample), data = pred_new(),
                      linetype = 2) +
-          coord_flip()
+          coord_flip() +
+          scale_colour_flatui()
 
       }
 
